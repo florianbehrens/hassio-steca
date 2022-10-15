@@ -1,0 +1,14 @@
+{
+    "domain": "steca",
+    "name": "Steca coolcept inverters",
+    "documentation": "n/a",
+    "dependencies": [],
+    "codeowners": ["florianbehrens"],
+    "requirements": [
+        "aiohttp==3.7.4.post0",
+        "asyncio==3.4.3",
+        "untangle==1.2.1"
+        ],
+    "iot_class": "local_polling",
+    "version": "0.1.0"
+}
