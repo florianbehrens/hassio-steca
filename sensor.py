@@ -63,9 +63,27 @@ async def async_setup_platform(
 
     async_add_entities(
         [ 
-            PowerEntity(coordinator), 
-            AcVoltageEntity(coordinator),
-            AcFrequencyEntity(coordinator)
+            StecaEntity(
+                coordinator=coordinator, 
+                name="Generated Power", 
+                unit_of_measurement=POWER_WATT,
+                device_class=SensorDeviceClass.POWER,
+                identifier="AC_Power" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="AC Voltage", 
+                unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+                device_class=SensorDeviceClass.VOLTAGE,
+                identifier="AC_Voltage" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="AC Frequency", 
+                unit_of_measurement=FREQUENCY_HERTZ,
+                device_class=SensorDeviceClass.FREQUENCY,
+                identifier="AC_Frequency" 
+            )
         ]
     )
 
@@ -110,8 +128,8 @@ class MyCoordinator(DataUpdateCoordinator):
                     return data
 
 
-class PowerEntity(CoordinatorEntity, SensorEntity):
-    """Photovoltaics power entity.
+class StecaEntity(CoordinatorEntity, SensorEntity):
+    """Steca inverter entity.
 
     The CoordinatorEntity class provides:
       should_poll
@@ -121,74 +139,20 @@ class PowerEntity(CoordinatorEntity, SensorEntity):
 
     """
 
-    _attr_name = "Generated Power"
-    _attr_native_unit_of_measurement = POWER_WATT
-    _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator):
+    def __init__(self, coordinator: DataUpdateCoordinator, name: str, unit_of_measurement, device_class, identifier: str):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
+        self._attr_name = name
+        self._attr_native_unit_of_measurement = unit_of_measurement
+        self._attr_device_class = device_class
+        self._identifier = identifier
+
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._attr_native_value = self.coordinator.data["AC_Power"][0]
-        self._attr_native_unit_of_measurement = self.coordinator.data["AC_Power"][1]
-        self.async_write_ha_state()
-
-
-class AcVoltageEntity(CoordinatorEntity, SensorEntity):
-    """AC voltage entity.
-
-    The CoordinatorEntity class provides:
-      should_poll
-      async_update
-      async_added_to_hass
-      available
-
-    """
-
-    _attr_name = "AC Voltage"
-    _attr_native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT
-    _attr_device_class = SensorDeviceClass.VOLTAGE
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, coordinator):
-        """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self._attr_native_value = self.coordinator.data["AC_Voltage"][0]
-        self._attr_native_unit_of_measurement = self.coordinator.data["AC_Voltage"][1]
-        self.async_write_ha_state()
-
-
-class AcFrequencyEntity(CoordinatorEntity, SensorEntity):
-    """AC voltage entity.
-
-    The CoordinatorEntity class provides:
-      should_poll
-      async_update
-      async_added_to_hass
-      available
-
-    """
-
-    _attr_name = "AC Frequency"
-    _attr_native_unit_of_measurement = FREQUENCY_HERTZ
-    _attr_device_class = SensorDeviceClass.FREQUENCY
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, coordinator):
-        """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self._attr_native_value = self.coordinator.data["AC_Frequency"][0]
-        self._attr_native_unit_of_measurement = self.coordinator.data["AC_Frequency"][1]
+        self._attr_native_value = self.coordinator.data[self._identifier][0]
+        self._attr_native_unit_of_measurement = self.coordinator.data[self._identifier][1]
         self.async_write_ha_state()
