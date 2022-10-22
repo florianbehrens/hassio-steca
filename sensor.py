@@ -64,7 +64,8 @@ async def async_setup_platform(
     async_add_entities(
         [ 
             PowerEntity(coordinator), 
-            AcVoltageEntity(coordinator)
+            AcVoltageEntity(coordinator),
+            AcFrequencyEntity(coordinator)
         ]
     )
 
