@@ -14,7 +14,7 @@ from homeassistant.components.sensor import (
 )
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_HOST, POWER_WATT
+from homeassistant.const import CONF_HOST, POWER_WATT, ELECTRIC_POTENTIAL_VOLT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -55,7 +55,10 @@ async def async_setup_platform(
     await coordinator.async_config_entry_first_refresh()
 
     async_add_entities(
-        [PowerEntity(coordinator)]
+        [ 
+            PowerEntity(coordinator), 
+            AcVoltageEntity(coordinator)
+        ]
     )
 
 
@@ -100,7 +103,7 @@ class MyCoordinator(DataUpdateCoordinator):
 
 
 class PowerEntity(CoordinatorEntity, SensorEntity):
-    """Electric AC power entity.
+    """Photovoltaics power entity.
 
     The CoordinatorEntity class provides:
       should_poll
@@ -110,7 +113,7 @@ class PowerEntity(CoordinatorEntity, SensorEntity):
 
     """
 
-    _attr_name = "Generated Electric AC Power"
+    _attr_name = "Photovoltaics Power"
     _attr_native_unit_of_measurement = POWER_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -124,4 +127,32 @@ class PowerEntity(CoordinatorEntity, SensorEntity):
         """Handle updated data from the coordinator."""
         self._attr_native_value = self.coordinator.data["AC_Power"][0]
         self._attr_native_unit_of_measurement = self.coordinator.data["AC_Power"][1]
+        self.async_write_ha_state()
+
+
+class AcVoltageEntity(CoordinatorEntity, SensorEntity):
+    """AC voltage entity.
+
+    The CoordinatorEntity class provides:
+      should_poll
+      async_update
+      async_added_to_hass
+      available
+
+    """
+
+    _attr_name = "Photovoltaics AC Voltage"
+    _attr_native_unit_of_measurement = ELECTRIC_POTENTIAL_VOLT
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator):
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(coordinator)
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.coordinator.data["AC_Voltage"][0]
+        self._attr_native_unit_of_measurement = self.coordinator.data["AC_Voltage"][1]
         self.async_write_ha_state()
