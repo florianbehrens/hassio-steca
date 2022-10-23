@@ -16,10 +16,13 @@ from homeassistant.components.sensor import (
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 
 from homeassistant.const import (
-    CONF_HOST, 
+    CONF_HOST,
+    ELECTRIC_CURRENT_AMPERE,
     ELECTRIC_POTENTIAL_VOLT,
     FREQUENCY_HERTZ, 
-    POWER_WATT
+    POWER_FACTOR,
+    POWER_WATT,
+    TEMP_CELSIUS
 )
 
 from homeassistant.core import HomeAssistant, callback
@@ -65,13 +68,6 @@ async def async_setup_platform(
         [ 
             StecaEntity(
                 coordinator=coordinator, 
-                name="Generated Power", 
-                unit_of_measurement=POWER_WATT,
-                device_class=SensorDeviceClass.POWER,
-                identifier="AC_Power" 
-            ),
-            StecaEntity(
-                coordinator=coordinator, 
                 name="AC Voltage", 
                 unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
@@ -79,10 +75,59 @@ async def async_setup_platform(
             ),
             StecaEntity(
                 coordinator=coordinator, 
+                name="AC Current", 
+                unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                device_class=SensorDeviceClass.CURRENT,
+                identifier="AC_Current" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="Generated Power", 
+                unit_of_measurement=POWER_WATT,
+                device_class=SensorDeviceClass.POWER,
+                identifier="AC_Power" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
                 name="AC Frequency", 
                 unit_of_measurement=FREQUENCY_HERTZ,
                 device_class=SensorDeviceClass.FREQUENCY,
                 identifier="AC_Frequency" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="DC Voltage", 
+                unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+                device_class=SensorDeviceClass.VOLTAGE,
+                identifier="DC_Voltage" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="DC Current", 
+                unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                device_class=SensorDeviceClass.CURRENT,
+                identifier="DC_Current" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="Temperature", 
+                unit_of_measurement=TEMP_CELSIUS,
+                device_class=SensorDeviceClass.TEMPERATURE,
+                identifier="Temp" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="Grid Power", 
+                unit_of_measurement=POWER_WATT,
+                device_class=SensorDeviceClass.POWER,
+                identifier="GridPower" 
+            ),
+            StecaEntity(
+                coordinator=coordinator, 
+                name="Derating", 
+                unit_of_measurement=POWER_FACTOR,
+                device_class=SensorDeviceClass.PERCENTAGE,
+                identifier="Derating" 
             )
         ]
     )
