@@ -19,10 +19,10 @@ from homeassistant.const import (
     CONF_HOST,
     ELECTRIC_CURRENT_AMPERE,
     ELECTRIC_POTENTIAL_VOLT,
-    FREQUENCY_HERTZ, 
+    FREQUENCY_HERTZ,
     PERCENTAGE,
     POWER_WATT,
-    TEMP_CELSIUS
+    TEMP_CELSIUS,
 )
 
 from homeassistant.core import HomeAssistant, callback
@@ -37,11 +37,14 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+    }
+)
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -65,70 +68,70 @@ async def async_setup_platform(
     await coordinator.async_config_entry_first_refresh()
 
     async_add_entities(
-        [ 
+        [
             StecaEntity(
-                coordinator=coordinator, 
-                name="AC Voltage", 
+                coordinator=coordinator,
+                name="AC Voltage",
                 unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
-                identifier="AC_Voltage" 
+                identifier="AC_Voltage",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="AC Current", 
+                coordinator=coordinator,
+                name="AC Current",
                 unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 device_class=SensorDeviceClass.CURRENT,
-                identifier="AC_Current" 
+                identifier="AC_Current",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="Generated Power", 
+                coordinator=coordinator,
+                name="Generated Power",
                 unit_of_measurement=POWER_WATT,
                 device_class=SensorDeviceClass.POWER,
-                identifier="AC_Power" 
+                identifier="AC_Power",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="AC Frequency", 
+                coordinator=coordinator,
+                name="AC Frequency",
                 unit_of_measurement=FREQUENCY_HERTZ,
                 device_class=SensorDeviceClass.FREQUENCY,
-                identifier="AC_Frequency" 
+                identifier="AC_Frequency",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="DC Voltage", 
+                coordinator=coordinator,
+                name="DC Voltage",
                 unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
-                identifier="DC_Voltage" 
+                identifier="DC_Voltage",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="DC Current", 
+                coordinator=coordinator,
+                name="DC Current",
                 unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 device_class=SensorDeviceClass.CURRENT,
-                identifier="DC_Current" 
+                identifier="DC_Current",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="Temperature", 
+                coordinator=coordinator,
+                name="Temperature",
                 unit_of_measurement=TEMP_CELSIUS,
                 device_class=SensorDeviceClass.TEMPERATURE,
-                identifier="Temp" 
+                identifier="Temp",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="Grid Power", 
+                coordinator=coordinator,
+                name="Grid Power",
                 unit_of_measurement=POWER_WATT,
                 device_class=SensorDeviceClass.POWER,
-                identifier="GridPower" 
+                identifier="GridPower",
             ),
             StecaEntity(
-                coordinator=coordinator, 
-                name="Derating", 
+                coordinator=coordinator,
+                name="Derating",
                 unit_of_measurement=PERCENTAGE,
                 device_class=SensorDeviceClass.POWER_FACTOR,
-                identifier="Derating" 
-            )
+                identifier="Derating",
+            ),
         ]
     )
 
@@ -157,19 +160,19 @@ class MyCoordinator(DataUpdateCoordinator):
         """
         async with aiohttp.ClientSession() as session:
             async with async_timeout.timeout(10):
-                async with session.get(f"http://{self._host}/measurements.xml") as response:
+                async with session.get(
+                    f"http://{self._host}/measurements.xml"
+                ) as response:
                     html = await response.text()
-                    document = untangle.parse(html)                        
-                    data = {
-                        'device': document.root.Device["Name"]
-                    }
+                    document = untangle.parse(html)
+                    data = {"device": document.root.Device["Name"]}
 
                     for item in document.root.Device.Measurements.Measurement:
-                        data[item['Type']] = (
-                            item['Value'] if item['Value'] else 0,
-                            item['Unit']
+                        data[item["Type"]] = (
+                            item["Value"] if item["Value"] else 0,
+                            item["Unit"],
                         )
-                    
+
                     return data
 
 
@@ -186,7 +189,14 @@ class StecaEntity(CoordinatorEntity, SensorEntity):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: DataUpdateCoordinator, name: str, unit_of_measurement, device_class: SensorDeviceClass, identifier: str):
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        name: str,
+        unit_of_measurement,
+        device_class: SensorDeviceClass,
+        identifier: str,
+    ):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
         self._attr_name = name
@@ -194,10 +204,11 @@ class StecaEntity(CoordinatorEntity, SensorEntity):
         self._attr_device_class = device_class
         self._identifier = identifier
 
-
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._attr_native_value = self.coordinator.data[self._identifier][0]
-        self._attr_native_unit_of_measurement = self.coordinator.data[self._identifier][1]
+        self._attr_native_unit_of_measurement = self.coordinator.data[self._identifier][
+            1
+        ]
         self.async_write_ha_state()
