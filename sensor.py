@@ -186,7 +186,7 @@ class StecaEntity(CoordinatorEntity, SensorEntity):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: DataUpdateCoordinator, name: str, unit_of_measurement, device_class, identifier: str):
+    def __init__(self, coordinator: DataUpdateCoordinator, name: str, unit_of_measurement, device_class: SensorDeviceClass, identifier: str):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
         self._attr_name = name
