@@ -65,7 +65,7 @@ async def async_setup_platform(
     """Set up the platform."""
     _LOGGER.warning(f"Calling async_setup_platform({hass},{config},,{discovery_info})")
 
-    coordinator = MyCoordinator(hass, config["host"])
+    coordinator = StecaCoordinator(hass, config["host"])
 
     # Fetch initial data so we have data when entities subscribe
     #
@@ -146,7 +146,7 @@ async def async_setup_platform(
     )
 
 
-class MyCoordinator(DataUpdateCoordinator):
+class StecaCoordinator(DataUpdateCoordinator):
     """My custom coordinator."""
 
     def __init__(self, hass: HomeAssistant, host: str):
