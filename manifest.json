@@ -1,15 +1,15 @@
 {
     "domain": "steca",
     "name": "Steca coolcept inverters",
-    "documentation": "n/a",
+    "codeowners": ["@florianbehrens"],
     "dependencies": [],
-    "codeowners": ["florianbehrens"],
-    "requirements": [
-        "aiohttp>=3.9.5",
-        "asyncio>=3.4.3",
-        "untangle>=1.2.1"
-        ],
+    "documentation": "https://github.com/florianbehrens/hassio-steca/",
     "iot_class": "local_polling",
+    "requirements": [
+      "aiohttp>=3.9.5",
+      "untangle>=1.2.1"
+    ],
     "version": "0.1.0",
     "config_flow": true
-}
+  }
+  

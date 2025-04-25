@@ -1,71 +1,43 @@
-import aiohttp
-import asyncio
-import async_timeout
-import logging
-import untangle
-import voluptuous as vol
+"""Platform for sensor integration."""
 
+from __future__ import annotations
+
+from asyncio import timeout
 from datetime import timedelta
+import logging
+
+import aiohttp
+import untangle
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONF_HOST,
-    ELECTRIC_CURRENT_AMPERE,
-    ELECTRIC_POTENTIAL_VOLT,
-    FREQUENCY_HERTZ,
     PERCENTAGE,
-    POWER_WATT,
-    TEMP_CELSIUS,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfTemperature,
 )
-
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import homeassistant.helpers.config_validation as cv
-
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
-    UpdateFailed,
-)
-
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_HOST): cv.string,
-    }
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Set up entry."""
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(
-            config_entry, "sensor"
-        )
-    )
 
-    return True
-
-
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the platform."""
-    _LOGGER.warning(f"Calling async_setup_platform({hass},{config},,{discovery_info})")
-
-    coordinator = StecaCoordinator(hass, config["host"])
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> bool:
+    """Set up a config entry."""
+    coordinator = StecaCoordinator(hass, entry.data["ip"])
 
     # Fetch initial data so we have data when entities subscribe
     #
@@ -82,56 +54,56 @@ async def async_setup_platform(
             StecaEntity(
                 coordinator=coordinator,
                 name="AC Voltage",
-                unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+                unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 identifier="AC_Voltage",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="AC Current",
-                unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 device_class=SensorDeviceClass.CURRENT,
                 identifier="AC_Current",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="Generated Power",
-                unit_of_measurement=POWER_WATT,
+                unit_of_measurement=UnitOfPower.WATT,
                 device_class=SensorDeviceClass.POWER,
                 identifier="AC_Power",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="AC Frequency",
-                unit_of_measurement=FREQUENCY_HERTZ,
+                unit_of_measurement=UnitOfFrequency.HERTZ,
                 device_class=SensorDeviceClass.FREQUENCY,
                 identifier="AC_Frequency",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="DC Voltage",
-                unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+                unit_of_measurement=UnitOfElectricPotential.VOLT,
                 device_class=SensorDeviceClass.VOLTAGE,
                 identifier="DC_Voltage",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="DC Current",
-                unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 device_class=SensorDeviceClass.CURRENT,
                 identifier="DC_Current",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="Temperature",
-                unit_of_measurement=TEMP_CELSIUS,
+                unit_of_measurement=UnitOfTemperature.CELSIUS,
                 device_class=SensorDeviceClass.TEMPERATURE,
                 identifier="Temp",
             ),
             StecaEntity(
                 coordinator=coordinator,
                 name="Grid Power",
-                unit_of_measurement=POWER_WATT,
+                unit_of_measurement=UnitOfPower.WATT,
                 device_class=SensorDeviceClass.POWER,
                 identifier="GridPower",
             ),
@@ -149,7 +121,7 @@ async def async_setup_platform(
 class StecaCoordinator(DataUpdateCoordinator):
     """My custom coordinator."""
 
-    def __init__(self, hass: HomeAssistant, host: str):
+    def __init__(self, hass: HomeAssistant, host: str) -> None:
         """Initialize my coordinator."""
         super().__init__(
             hass,
@@ -168,22 +140,22 @@ class StecaCoordinator(DataUpdateCoordinator):
         This is the place to pre-process the data to lookup tables
         so entities can quickly look up their data.
         """
-        async with aiohttp.ClientSession() as session:
-            async with async_timeout.timeout(10):
-                async with session.get(
-                    f"http://{self._host}/measurements.xml"
-                ) as response:
-                    html = await response.text()
-                    document = untangle.parse(html)
-                    data = {"device": document.root.Device["Name"]}
+        async with (
+            aiohttp.ClientSession() as session,
+            timeout(10),
+            session.get(f"http://{self._host}/measurements.xml") as response,
+        ):
+            html = await response.text()
+            document = untangle.parse(html)
+            data = {"device": document.root.Device["Name"]}
 
-                    for item in document.root.Device.Measurements.Measurement:
-                        data[item["Type"]] = (
-                            item["Value"] if item["Value"] else 0,
-                            item["Unit"],
-                        )
+            for item in document.root.Device.Measurements.Measurement:
+                data[item["Type"]] = (
+                    item["Value"] if item["Value"] else 0,
+                    item["Unit"],
+                )
 
-                    return data
+            return data
 
 
 class StecaEntity(CoordinatorEntity, SensorEntity):
@@ -206,7 +178,7 @@ class StecaEntity(CoordinatorEntity, SensorEntity):
         unit_of_measurement,
         device_class: SensorDeviceClass,
         identifier: str,
-    ):
+    ) -> None:
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
         self._attr_name = name
